@@ -3,7 +3,7 @@
 (**
   * AppleTweet
   * @link http://code.google.com/p/appletweet/
-  * @version 2.0.6 (February 22 2009)
+  * @version 2.0.007 (February 22 2009)
   * @author Jason Aldridge
   * @copyright Copyright (C) 2009, Jason Aldridge
   * 
@@ -45,6 +45,14 @@
 -- Pretty much everything we're going to do uses Indigo, so I invoke it at the
 -- beginning.  It could also be invoked in each function as necessary, but meh.
 using terms from application "IndigoServer"
+    (**
+        * DoubleCheck that a device is in the state that we expect it to be and 
+        * send a specific Tweet if it is not.
+        * @param string DeviceName Indigo name of the device to check status of.
+        * @param string ExpectedStatus Expected status of the device.
+        * @param string TweetIfUnmatched What to say if the state doesn't match.
+        * @uses Tweet() to send the message.
+    *)
     on DoubleCheck(DeviceName, ExpectedStatus, TweetIfUnmatched)
         set verbose to false
         tell application "IndigoServer"
@@ -81,6 +89,12 @@ using terms from application "IndigoServer"
         end repeat
         return escaped_text
     end escapeshellarg
+    on AuthError(LogMessage)
+        log "Could not authenticate to Twitter.  " & LogMessage using type "AuthError"
+    end AuthError
+    on MissingVariable(ProblemVariable,VariableContains)
+            log "Could not log to Twitter.  Create an Indigo variable named " & ProblemVariable & " that contains " & VariableContains & "." using type "MissingVariable"
+    end VariableError
     on Tweet(TwitterStatus)
         set verbose to false
         tell application "IndigoServer"
@@ -100,7 +114,7 @@ using terms from application "IndigoServer"
                             end if
                             set results to do shell script ShellScript
                             if (results contains "Could not authenticate") then
-                                log "Could not authenticate to Twitter.  Check your username and password." using type "AuthError"
+                                AuthError("Check your username and password.")
                             end if
                             if (results contains "Client must provide a 'status' parameter") then
                                 log "Twitter did not accept the status: " & TwitterStatus using type "ParamError"
@@ -109,13 +123,13 @@ using terms from application "IndigoServer"
                                 log "Twitter Status: " & results using type "VerboseOutput"
                             end if
                         else
-                            log "Could not log to Twitter.  Create an Indigo variable named TwitterPassword that contains your Twitter password." using type "ScriptError"
+                            MissingVariable("TwitterPassword","your Twitter password")
                         end if
                     else
-                        log "Could not log to Twitter.  Create an Indigo variable named TwitterUserName that contains your Twitter username." using type "ScriptError"
+                        MissingVariable("TwitterUserName","your Twitter username")
                     end if
                 else
-                    log "Could not log to Twitter.  Create an Indigo variable named TwitterAPIURL contains the API URL for Twitter." using type "ScriptError"
+                    MissingVariable("TwitterAPIURL","the API URL for Twitter")
                 end if
             end if
         end tell
