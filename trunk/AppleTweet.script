@@ -1,78 +1,130 @@
--- Sends a message via the twitter API
+#!/usr/bin/osascript
 
+(**
+  * AppleTweet
+  * @link http://code.google.com/p/appletweet/
+  * @version 2.0.0 (February 22 2009)
+  * @author Jason Aldridge
+  * @copyright Copyright (C) 2009, Jason Aldridge
+  * 
+  * Description:
+  * AppleTweet is an AppleScript wrapper for curl that invokes the Twitter API
+  * and integrates with Perceptive Automation's Indigo Home Automation
+  * software.
+  *
+  * Its primary aim is to supplement Indigo's reporting capability with logging
+  * to Twitter in a user-friendly manner.  Secondarily, AppleTweet provides 
+  * other functions that have come up in the process of Twitter-Logging from an
+  * Apple Mac Mini.
+  *
+  * To see an example of what can be done with Indigo and AppleTweet, please
+  * visit the following sites: 
+  * @link http://www.twitter.com/JCHouse Jason and Cheryll's House on Twitter
+  * @link http://house.jasonandcheryll.com/ Journey to Skynet (Blog)
+  *
+  * The following functions are provided:
+  * @see DoubleCheck()
+  * @see Tweet()
+  * @see TweetWithTime()
+  *
+  * ===============================LICENSE=====================================
+  * This program is free software: you can redistribute it and/or modify it 
+  * under the terms of the GNU General Public License as published by the Free 
+  * Software Foundation, version 3 of the License.
+  *
+  * This program is distributed in the hope that it will be useful, but WITHOUT
+  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
+  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for 
+  * more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  * =============================END LICENSE===================================
+*)
+
+-- Pretty much everything we're going to do uses Indigo, so I invoke it at the
+-- beginning.  It could also be invoked in each function as necessary, but meh.
 using terms from application "IndigoServer"
-	on DoubleCheck(DeviceName, ExpectedStatus, TweetIfUnmatched)
-		set verbose to false
-		tell application "IndigoServer"
-			if (device DeviceName exists) then
-				if (ExpectedStatus is "ON" or ExpectedStatus is "OFF") then
-					if (get supports on off of device DeviceName) then
-						if (ExpectedStatus is "ON") then
-							set binExpectedStatus to true
-						else
-							set binExpectedStatus to false
-						end if
-						if (binExpectedStatus is not equal to on state of device DeviceName) then
-							Tweet(TweetIfUnmatched)
-							log TweetIfUnmatched using type "UnexpectedResult"
-						end if
-					else
-						log DeviceName & " does not support the status: " & ExpectedStatus using type "DeviceError"
-					end if
-				end if
-			else
-				log DeviceName & " does not exist." using type "ScriptEror"
-			end if
-		end tell
-	end DoubleCheck
-	on escapeshellarg(strShellArg)
-		set escape_characters to "\"#&;`|*?~<>^()[]{}$\\/'!"
-		set escaped_text to ""
-		repeat with this_char in strShellArg
-			if this_char is in escape_characters then
-				set escaped_text to (escaped_text & "\\" & this_char) as string
-			else
-				set escaped_text to (escaped_text & this_char) as string
-			end if
-		end repeat
-		return escaped_text
-	end escapeshellarg
-	on Tweet(TwitterStatus)
-		set verbose to false
-		tell application "IndigoServer"
-			if (TwitterStatus is null or TwitterStatus is equal to "") then
-				log "Could not log to Twitter.  The Twitter Status was blank." using type "ScriptError"
-			else
-				set TwitterStatus to "status=" & time string of (current date) & " " & TwitterStatus
-				if (variable "TwitterAPIURL" exists) then
-					set TwitterAPIURL to value of variable "TwitterAPIURL"
-					if (variable "TwitterUsername" exists) then
-						set TwitterUsername to value of variable "TwitterUsername"
-						if (variable "TwitterPassword" exists) then
-							set TwitterPassword to value of variable "TwitterPassword"
-							if (verbose is equal to true) then
-								log "Twitter trying: curl --user \"" & TwitterUsername & ":" & TwitterPassword & "\" --data-binary \"" & TwitterStatus & "\" \"" & TwitterAPIURL & "\"" using type "VerboseOutput"
-							end if
-							set results to do shell script "curl --user \"" & TwitterUsername & ":" & TwitterPassword & "\" --data-binary \"" & TwitterStatus & "\" \"" & TwitterAPIURL & "\""
-							if (results contains "Could not authenticate") then
-								log "Could not authenticate to Twitter.  Check your username and password." using type "AuthError"
-							end if
-							if (results contains "Client must provide a 'status' parameter") then
-								log "Twitter did not accept the status: " & TwitterStatus using type "ParamError"
-							end if
-							if (verbose is equal to true) then
-								log "Twitter Status: " & results using type "VerboseOutput"
-							end if
-						else
-							log "Could not log to Twitter.  Create an Indigo variable named TwitterPassword that contains your Twitter password." using type "ScriptError"
-						end if
-					else
-						log "Could not log to Twitter.  Create an Indigo variable named TwitterUsername that contains your Twitter username." using type "ScriptError"
-					end if
-				else
-					log "Could not log to Twitter.  Create an Indigo variable named TwitterAPIURL that contains the API URL for Twitter." using type "ScriptError"
-				end if
-			end if
-		end tell
-	end Tweet
+    on DoubleCheck(DeviceName, ExpectedStatus, TweetIfUnmatched)
+        set verbose to false
+        tell application "IndigoServer"
+            if (device DeviceName exists) then
+                if (ExpectedStatus is "ON" or ExpectedStatus is "OFF") then
+                    if (get supports on off of device DeviceName) then
+                        if (ExpectedStatus is "ON") then
+                            set binExpectedStatus to true
+                        else
+                            set binExpectedStatus to false
+                        end if
+                        if (binExpectedStatus is not equal to on state of device DeviceName) then
+                            Tweet(TweetIfUnmatched)
+                            log TweetIfUnmatched using type "UnexpectedResult"
+                        end if
+                    else
+                        log DeviceName & " does not support the status: " & ExpectedStatus using type "DeviceError"
+                    end if
+                end if
+            else
+                log DeviceName & " does not exist." using type "ScriptEror"
+            end if
+        end tell
+    end DoubleCheck
+    on escapeshellarg(strShellArg)
+        set escape_characters to "\"#&;`|*?~<>^()[]{}$\\/'!"
+        set escaped_text to ""
+        repeat with this_char in strShellArg
+            if this_char is in escape_characters then
+                set escaped_text to (escaped_text & "\\" & this_char) as string 
+            else
+                set escaped_text to (escaped_text & this_char) as string
+            end if
+        end repeat
+        return escaped_text
+    end escapeshellarg
+    on Tweet(TwitterStatus)
+        set verbose to false
+        tell application "IndigoServer"
+            if (TwitterStatus is null or TwitterStatus is equal to "") then
+                log "Could not log to Twitter.  The Twitter Status was blank." using type "ScriptError"
+            else
+                set TwitterStatus to "status=" & TwitterStatus
+                if (variable "TwitterAPIURL" exists) then
+                    set TwitterAPIURL to value of variable "TwitterAPIURL"
+                    if (variable "TwitterUsername" exists) then
+                        set TwitterUsername to value of variable "TwitterUsername"
+                        if (variable "TwitterPassword" exists) then
+                            set TwitterPassword to value of variable "TwitterPassword"
+                            set ShellScript to "curl --user \"" & TwitterUsername & ":" & TwitterPassword & "\" --data-binary \"" & TwitterStatus & "\" \"" & TwitterAPIURL & "\""
+                            if (verbose is equal to true) then
+                                log "Twitter trying: " & ShellScript using type "VerboseOutput"
+                            end if
+                            set results to do shell script ShellScript
+                            if (results contains "Could not authenticate") then
+                                log "Could not authenticate to Twitter.  Check your username and password." using type "AuthError"
+                            end if
+                            if (results contains "Client must provide a 'status' parameter") then
+                                log "Twitter did not accept the status: " & TwitterStatus using type "ParamError"
+                            end if
+                            if (verbose is equal to true) then
+                                log "Twitter Status: " & results using type "VerboseOutput"
+                            end if
+                        else
+                            log "Could not log to Twitter.  Create an Indigo variable named TwitterPassword that contains your Twitter password." using type "ScriptError"
+                        end if
+                    else
+                        log "Could not log to Twitter.  Create an Indigo variable named TwitterUserName that contains your Twitter username." using type "ScriptError"
+                    end if
+                else
+                    log "Could not log to Twitter.  Create an Indigo variable named TwitterAPIURL contains the API URL for Twitter." using type "ScriptError"
+                end if
+            end if
+        end tell
+    end Tweet
+    on TweetWithTime(TwitterStatus)
+        if (TwitterStatus is null or TwitterStatus is equal to "") then
+            log "Could not log to Twitter.  The Twitter Status was blank." using type "ScriptError"
+		else
+			Tweet(TwitterStatus & " (" & time string of (current date) & ")")
+		end if
+    end TweetTimeStamp
 end using terms from
