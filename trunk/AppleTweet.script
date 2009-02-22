@@ -1,0 +1,78 @@
+-- Sends a message via the twitter API
+
+using terms from application "IndigoServer"
+	on DoubleCheck(DeviceName, ExpectedStatus, TweetIfUnmatched)
+		set verbose to false
+		tell application "IndigoServer"
+			if (device DeviceName exists) then
+				if (ExpectedStatus is "ON" or ExpectedStatus is "OFF") then
+					if (get supports on off of device DeviceName) then
+						if (ExpectedStatus is "ON") then
+							set binExpectedStatus to true
+						else
+							set binExpectedStatus to false
+						end if
+						if (binExpectedStatus is not equal to on state of device DeviceName) then
+							Tweet(TweetIfUnmatched)
+							log TweetIfUnmatched using type "UnexpectedResult"
+						end if
+					else
+						log DeviceName & " does not support the status: " & ExpectedStatus using type "DeviceError"
+					end if
+				end if
+			else
+				log DeviceName & " does not exist." using type "ScriptEror"
+			end if
+		end tell
+	end DoubleCheck
+	on escapeshellarg(strShellArg)
+		set escape_characters to "\"#&;`|*?~<>^()[]{}$\\/'!"
+		set escaped_text to ""
+		repeat with this_char in strShellArg
+			if this_char is in escape_characters then
+				set escaped_text to (escaped_text & "\\" & this_char) as string
+			else
+				set escaped_text to (escaped_text & this_char) as string
+			end if
+		end repeat
+		return escaped_text
+	end escapeshellarg
+	on Tweet(TwitterStatus)
+		set verbose to false
+		tell application "IndigoServer"
+			if (TwitterStatus is null or TwitterStatus is equal to "") then
+				log "Could not log to Twitter.  The Twitter Status was blank." using type "ScriptError"
+			else
+				set TwitterStatus to "status=" & time string of (current date) & " " & TwitterStatus
+				if (variable "TwitterAPIURL" exists) then
+					set TwitterAPIURL to value of variable "TwitterAPIURL"
+					if (variable "TwitterUsername" exists) then
+						set TwitterUsername to value of variable "TwitterUsername"
+						if (variable "TwitterPassword" exists) then
+							set TwitterPassword to value of variable "TwitterPassword"
+							if (verbose is equal to true) then
+								log "Twitter trying: curl --user \"" & TwitterUsername & ":" & TwitterPassword & "\" --data-binary \"" & TwitterStatus & "\" \"" & TwitterAPIURL & "\"" using type "VerboseOutput"
+							end if
+							set results to do shell script "curl --user \"" & TwitterUsername & ":" & TwitterPassword & "\" --data-binary \"" & TwitterStatus & "\" \"" & TwitterAPIURL & "\""
+							if (results contains "Could not authenticate") then
+								log "Could not authenticate to Twitter.  Check your username and password." using type "AuthError"
+							end if
+							if (results contains "Client must provide a 'status' parameter") then
+								log "Twitter did not accept the status: " & TwitterStatus using type "ParamError"
+							end if
+							if (verbose is equal to true) then
+								log "Twitter Status: " & results using type "VerboseOutput"
+							end if
+						else
+							log "Could not log to Twitter.  Create an Indigo variable named TwitterPassword that contains your Twitter password." using type "ScriptError"
+						end if
+					else
+						log "Could not log to Twitter.  Create an Indigo variable named TwitterUsername that contains your Twitter username." using type "ScriptError"
+					end if
+				else
+					log "Could not log to Twitter.  Create an Indigo variable named TwitterAPIURL that contains the API URL for Twitter." using type "ScriptError"
+				end if
+			end if
+		end tell
+	end Tweet
+end using terms from
