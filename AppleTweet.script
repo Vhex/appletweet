@@ -3,7 +3,7 @@
 (**
   * AppleTweet
   * @link http://code.google.com/p/appletweet/
-  * @version 2.0.007 (February 22 2009)
+  * @version 2.0.009 (February 22 2009)
   * @author Jason Aldridge
   * @copyright Copyright (C) 2009, Jason Aldridge
   * 
@@ -134,6 +134,14 @@ using terms from application "IndigoServer"
             end if
         end tell
     end Tweet
+    (**
+        * Modify the TwitterStatus to have the current timestamp at the end in
+        * the format of ([H]H:MM AM/PM).  This is used to send duplicate status
+        * updates since the Twitter REST API ignores a status update if it is 
+        * the status has not changed.
+        * @param string TwitterStatus The Twitter Status that should be set.
+        * @uses Tweet() to send the message.
+    *)
     on TweetWithTime(TwitterStatus)
         if (TwitterStatus is null or TwitterStatus is equal to "") then
             log "Could not log to Twitter.  The Twitter Status was blank." using type "ScriptError"
