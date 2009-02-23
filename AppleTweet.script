@@ -138,7 +138,9 @@ using terms from application "IndigoServer"
         if (TwitterStatus is null or TwitterStatus is equal to "") then
             log "Could not log to Twitter.  The Twitter Status was blank." using type "ScriptError"
 		else
-			Tweet(TwitterStatus & " (" & time string of (current date) & ")")
+            set TimeParts to words of (time string of (current date))
+            set TimeWithoutSeconds to (item 1 of TimeParts) & ":" & (item 2 of TimeParts) & " " & (item 4 of TimeParts)
+			Tweet(TwitterStatus & " (" & TimeWithoutSeconds & ")")
 		end if
     end TweetTimeStamp
 end using terms from
