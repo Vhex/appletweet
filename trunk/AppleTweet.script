@@ -3,7 +3,7 @@
 (**
   * AppleTweet
   * @link http://code.google.com/p/appletweet/
-  * @version 2.0.009 (February 22 2009)
+  * @version 2.0.010 (February 22 2009)
   * @author Jason Aldridge
   * @copyright Copyright (C) 2009, Jason Aldridge
   * 
@@ -108,7 +108,7 @@ using terms from application "IndigoServer"
                         set TwitterUsername to value of variable "TwitterUsername"
                         if (variable "TwitterPassword" exists) then
                             set TwitterPassword to value of variable "TwitterPassword"
-                            set ShellScript to "curl --user \"" & TwitterUsername & ":" & TwitterPassword & "\" --data-binary \"" & TwitterStatus & "\" \"" & TwitterAPIURL & "\""
+                            set ShellScript to "curl --user \"" & TwitterUsername & ":" & TwitterPassword & "\" --data-binary \"source=jchousesappletweet&" & TwitterStatus & "\" \"" & TwitterAPIURL & "\""
                             if (verbose is equal to true) then
                                 log "Twitter trying: " & ShellScript using type "VerboseOutput"
                             end if
