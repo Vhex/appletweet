@@ -3,7 +3,7 @@
 (**
   * AppleTweet
   * @link http://code.google.com/p/appletweet/
-  * @version 2.0.010 (February 22 2009)
+  * @version 2.0.012 (March 9 2009)
   * @author Jason Aldridge
   * @copyright Copyright (C) 2009, Jason Aldridge
   * 
@@ -67,16 +67,46 @@ using terms from application "IndigoServer"
                         if (binExpectedStatus is not equal to on state of device DeviceName) then
                             Tweet(TweetIfUnmatched)
                             log TweetIfUnmatched using type "UnexpectedResult"
+                            return False
+                        else
+                            return True
                         end if
                     else
                         log DeviceName & " does not support the status: " & ExpectedStatus using type "DeviceError"
+                        return False
                     end if
                 end if
             else
                 log DeviceName & " does not exist." using type "ScriptEror"
+                return False
             end if
         end tell
     end DoubleCheck
+    (**
+        * DoubleCheck that a device is in the state that we expect it to be and 
+        * send a specific Tweet if it is not.  Additionally, if the device is
+        * not in the state we expect, set it to that state.
+        * @param string DeviceName Indigo name of the device to check status of.
+        * @param string ExpectedStatus Expected status of the device.
+        * @param string TweetIfUnmatched What to say if the state doesn't match.
+        * @param string TweetIfFixed What to say if the state doesn't match and 
+        *               we fix it.
+        * @uses DoubleCheck() to determine status.
+    *)
+    on DoubleCheckAndFix(DeviceName, ExpectedStatus, TweetIfUnmatched, TweetIfFixed)
+        if(DoubleCheck(DeviceName,ExpectedStatus,TweetIfUnmatched) is False) then
+            tell application "IndigoServer"
+                if (ExpectedStatus is "ON") then
+                    turn on DeviceName
+                else if (ExpectedStatus is "OFF")
+                    turn off DeviceName
+                end if
+            end tell
+            if(DoubleCheck(DeviceName,ExpectedStatus,TweetIfUnmatched) is True) then
+                Tweet(TweetIfFixed)
+            end if
+        end if
+    end DoubleCheckAndFix
     on escapeshellarg(strShellArg)
         set escape_characters to "\"#&;`|*?~<>^()[]{}$\\/'!"
         set escaped_text to ""
