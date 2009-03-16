@@ -3,7 +3,7 @@
 (**
   * AppleTweet
   * @link http://code.google.com/p/appletweet/
-  * @version 2.0.012 (March 9 2009)
+  * @version 2.0.013 (March 15 2009)
   * @author Jason Aldridge
   * @copyright Copyright (C) 2009, Jason Aldridge
   * 
@@ -124,7 +124,7 @@ using terms from application "IndigoServer"
     end AuthError
     on MissingVariable(ProblemVariable,VariableContains)
             log "Could not log to Twitter.  Create an Indigo variable named " & ProblemVariable & " that contains " & VariableContains & "." using type "MissingVariable"
-    end VariableError
+    end MissingVariable
     on Tweet(TwitterStatus)
         set verbose to false
         tell application "IndigoServer"
@@ -180,5 +180,5 @@ using terms from application "IndigoServer"
             set TimeWithoutSeconds to (item 1 of TimeParts) & ":" & (item 2 of TimeParts) & " " & (item 4 of TimeParts)
 			Tweet(TwitterStatus & " (" & TimeWithoutSeconds & ")")
 		end if
-    end TweetTimeStamp
+    end TweetWithTime
 end using terms from
